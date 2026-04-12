@@ -1,7 +1,9 @@
 package projects
 
 import (
+	"context"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"taskflow/internal/utils"
@@ -24,8 +26,11 @@ func (h *Handler) RegisterRoutes(r *gin.RouterGroup) {
 }
 
 func (h *Handler) list(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 3*time.Second)
+	defer cancel()
+
 	userID, _ := c.Get("user_id")
-	projects, err := h.service.List(c.Request.Context(), userID.(string))
+	projects, err := h.service.List(ctx, userID.(string))
 	if err != nil {
 		utils.SendError(c, http.StatusInternalServerError, "failed to fetch projects")
 		return
@@ -34,6 +39,9 @@ func (h *Handler) list(c *gin.Context) {
 }
 
 func (h *Handler) create(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 3*time.Second)
+	defer cancel()
+
 	userID, _ := c.Get("user_id")
 
 	var req CreateProjectRequest
@@ -42,7 +50,7 @@ func (h *Handler) create(c *gin.Context) {
 		return
 	}
 
-	project, err := h.service.Create(c.Request.Context(), userID.(string), req)
+	project, err := h.service.Create(ctx, userID.(string), req)
 	if err != nil {
 		utils.SendError(c, http.StatusInternalServerError, "failed to create project")
 		return
@@ -52,8 +60,11 @@ func (h *Handler) create(c *gin.Context) {
 }
 
 func (h *Handler) getByID(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 3*time.Second)
+	defer cancel()
+
 	id := c.Param("id")
-	details, err := h.service.GetDetails(c.Request.Context(), id)
+	details, err := h.service.GetDetails(ctx, id)
 	if err != nil {
 		if err == ErrNotFound {
 			utils.SendError(c, http.StatusNotFound, "project not found")
@@ -67,6 +78,9 @@ func (h *Handler) getByID(c *gin.Context) {
 }
 
 func (h *Handler) update(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 3*time.Second)
+	defer cancel()
+
 	userID, _ := c.Get("user_id")
 	id := c.Param("id")
 
@@ -76,7 +90,7 @@ func (h *Handler) update(c *gin.Context) {
 		return
 	}
 
-	project, err := h.service.Update(c.Request.Context(), id, userID.(string), req)
+	project, err := h.service.Update(ctx, id, userID.(string), req)
 	if err != nil {
 		if err.Error() == "forbidden" {
 			utils.SendError(c, http.StatusForbidden, "unauthorized action")
@@ -94,10 +108,13 @@ func (h *Handler) update(c *gin.Context) {
 }
 
 func (h *Handler) delete(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 3*time.Second)
+	defer cancel()
+
 	userID, _ := c.Get("user_id")
 	id := c.Param("id")
 
-	err := h.service.Delete(c.Request.Context(), id, userID.(string))
+	err := h.service.Delete(ctx, id, userID.(string))
 	if err != nil {
 		if err.Error() == "forbidden" {
 			utils.SendError(c, http.StatusForbidden, "unauthorized action")

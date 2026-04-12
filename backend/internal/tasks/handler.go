@@ -1,7 +1,9 @@
 package tasks
 
 import (
+	"context"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"taskflow/internal/utils"
@@ -26,11 +28,14 @@ func (h *Handler) RegisterRoutes(api *gin.RouterGroup) {
 }
 
 func (h *Handler) listByProject(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 3*time.Second)
+	defer cancel()
+
 	projectID := c.Param("id")
 	status := c.Query("status")
 	assignee := c.Query("assignee")
 
-	tasks, err := h.service.List(c.Request.Context(), projectID, status, assignee)
+	tasks, err := h.service.List(ctx, projectID, status, assignee)
 	if err != nil {
 		utils.SendError(c, http.StatusInternalServerError, "failed to fetch tasks")
 		return
@@ -39,6 +44,9 @@ func (h *Handler) listByProject(c *gin.Context) {
 }
 
 func (h *Handler) create(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 3*time.Second)
+	defer cancel()
+
 	userID, _ := c.Get("user_id")
 	projectID := c.Param("id")
 
@@ -48,7 +56,7 @@ func (h *Handler) create(c *gin.Context) {
 		return
 	}
 
-	task, err := h.service.Create(c.Request.Context(), projectID, userID.(string), req)
+	task, err := h.service.Create(ctx, projectID, userID.(string), req)
 	if err != nil {
 		if err == ErrNotFound {
 			utils.SendError(c, http.StatusNotFound, "project not found")
@@ -62,6 +70,9 @@ func (h *Handler) create(c *gin.Context) {
 }
 
 func (h *Handler) update(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 3*time.Second)
+	defer cancel()
+
 	userID, _ := c.Get("user_id")
 	id := c.Param("id")
 
@@ -71,7 +82,7 @@ func (h *Handler) update(c *gin.Context) {
 		return
 	}
 
-	task, err := h.service.Update(c.Request.Context(), id, userID.(string), req)
+	task, err := h.service.Update(ctx, id, userID.(string), req)
 	if err != nil {
 		if err.Error() == "forbidden" {
 			utils.SendError(c, http.StatusForbidden, "unauthorized action")
@@ -89,10 +100,13 @@ func (h *Handler) update(c *gin.Context) {
 }
 
 func (h *Handler) delete(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 3*time.Second)
+	defer cancel()
+
 	userID, _ := c.Get("user_id")
 	id := c.Param("id")
 
-	err := h.service.Delete(c.Request.Context(), id, userID.(string))
+	err := h.service.Delete(ctx, id, userID.(string))
 	if err != nil {
 		if err.Error() == "forbidden" {
 			utils.SendError(c, http.StatusForbidden, "unauthorized action")
