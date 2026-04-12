@@ -19,7 +19,11 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 
-	cfg := config.LoadConfig()
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		slog.Error("Failed to load config", "error", err)
+		os.Exit(1)
+	}
 
 	// Initialize database
 	dbConn, err := db.New(cfg.DatabaseURL)

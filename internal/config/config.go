@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 )
 
@@ -10,18 +11,25 @@ type Config struct {
 	JWTSecret   string
 }
 
-func LoadConfig() *Config {
+func LoadConfig() (*Config, error) {
 	return &Config{
 		Port:        getEnv("PORT", "8000"),
-		DatabaseURL: getEnv("DATABASE_URL", "postgres://test@localhost:5432/taskflow"),
-		JWTSecret:   getEnv("JWT_SECRET", "secret"),
-	}
+		DatabaseURL: getRequiredEnv("DATABASE_URL"),
+		JWTSecret:   getRequiredEnv("JWT_SECRET"),
+	}, nil
 }
 
 func getEnv(key, fallback string) string {
+	if value, exists := os.LookupEnv(key); exists {
+		return value
+	}
+	return fallback
+}
+
+func getRequiredEnv(key string) string {
 	value, exists := os.LookupEnv(key)
-	if !exists {
-		return fallback
+	if !exists || value == "" {
+		panic(fmt.Sprintf("missing required environment variable: %s", key))
 	}
 	return value
 }
