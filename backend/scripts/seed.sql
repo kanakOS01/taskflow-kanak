@@ -1,5 +1,3 @@
--- Seed User: test@example.com / password123 
--- Cost is 12 bounds to meet assessment criteria
 INSERT INTO users (id, name, email, password)
 VALUES ('7b1897c5-559d-43dd-bbf7-268a983b6f00', 'Test User', 'test@example.com', '$2a$12$R9h/cIPz0gi.URNNX3kh2OPST9/PgBkqquzi.Ss7KIUgO2t0jWMUW');
 
