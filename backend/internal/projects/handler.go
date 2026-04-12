@@ -3,6 +3,7 @@ package projects
 import (
 	"context"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -29,13 +30,30 @@ func (h *Handler) list(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 3*time.Second)
 	defer cancel()
 
+	page := 1
+	limit := 20
+
+	if p := c.Query("page"); p != "" {
+		if v, err := strconv.Atoi(p); err == nil && v > 0 {
+			page = v
+		}
+	}
+	if l := c.Query("limit"); l != "" {
+		if v, err := strconv.Atoi(l); err == nil && v > 0 {
+			if v > 100 {
+				v = 100
+			}
+			limit = v
+		}
+	}
+
 	userID, _ := c.Get("user_id")
-	projects, err := h.service.List(ctx, userID.(string))
+	resp, err := h.service.List(ctx, userID.(string), page, limit)
 	if err != nil {
 		utils.SendError(c, http.StatusInternalServerError, "failed to fetch projects")
 		return
 	}
-	c.JSON(http.StatusOK, projects)
+	c.JSON(http.StatusOK, resp)
 }
 
 func (h *Handler) create(c *gin.Context) {

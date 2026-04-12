@@ -10,7 +10,7 @@ import (
 
 type Service interface {
 	Create(ctx context.Context, userID string, req CreateProjectRequest) (*ProjectResponse, error)
-	List(ctx context.Context, userID string) ([]ProjectResponse, error)
+	List(ctx context.Context, userID string, page, limit int) (*ListProjectsResponse, error)
 	GetDetails(ctx context.Context, id string) (*ProjectDetailsResponse, error)
 	Update(ctx context.Context, id, userID string, req UpdateProjectRequest) (*ProjectResponse, error)
 	Delete(ctx context.Context, id, userID string) error
@@ -41,22 +41,25 @@ func (s *projectService) Create(ctx context.Context, userID string, req CreatePr
 	return s.mapToResponse(p), nil
 }
 
-func (s *projectService) List(ctx context.Context, userID string) ([]ProjectResponse, error) {
-	projects, err := s.repo.List(ctx, userID)
+func (s *projectService) List(ctx context.Context, userID string, page, limit int) (*ListProjectsResponse, error) {
+	projects, total, err := s.repo.List(ctx, userID, page, limit)
 	if err != nil {
 		return nil, err
 	}
 
-	var res []ProjectResponse
+	res := make([]ProjectResponse, 0, len(projects))
 	for _, p := range projects {
 		res = append(res, *s.mapToResponse(&p))
 	}
-	
-	if res == nil {
-		res = make([]ProjectResponse, 0)
-	}
 
-	return res, nil
+	return &ListProjectsResponse{
+		Projects: res,
+		Pagination: PaginationMeta{
+			Page:  page,
+			Limit: limit,
+			Total: total,
+		},
+	}, nil
 }
 
 func (s *projectService) GetDetails(ctx context.Context, id string) (*ProjectDetailsResponse, error) {
@@ -120,6 +123,5 @@ func (s *projectService) mapToResponse(p *Project) *ProjectResponse {
 		Description: p.Description,
 		OwnerID:     p.OwnerID,
 		CreatedAt:   p.CreatedAt,
-		UpdatedAt:   p.UpdatedAt,
 	}
 }

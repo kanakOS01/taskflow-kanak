@@ -18,7 +18,17 @@ type ProjectResponse struct {
 	Description string    `json:"description"`
 	OwnerID     string    `json:"owner_id"`
 	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+type PaginationMeta struct {
+	Page  int `json:"page"`
+	Limit int `json:"limit"`
+	Total int `json:"total"`
+}
+
+type ListProjectsResponse struct {
+	Projects   []ProjectResponse `json:"projects"`
+	Pagination PaginationMeta    `json:"pagination"`
 }
 
 type ProjectDetailsResponse struct {

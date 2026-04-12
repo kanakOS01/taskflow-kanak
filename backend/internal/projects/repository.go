@@ -12,7 +12,7 @@ var ErrNotFound = errors.New("project not found")
 
 type Repository interface {
 	Create(ctx context.Context, project *Project) error
-	List(ctx context.Context, userID string) ([]Project, error)
+	List(ctx context.Context, userID string, page, limit int) ([]Project, int, error)
 	GetByID(ctx context.Context, id string) (*Project, []Task, error)
 	Update(ctx context.Context, project *Project) error
 	Delete(ctx context.Context, id string) error
@@ -35,16 +35,30 @@ func (r *postgresRepository) Create(ctx context.Context, p *Project) error {
 	return err
 }
 
-func (r *postgresRepository) List(ctx context.Context, userID string) ([]Project, error) {
-	query := `
-		SELECT DISTINCT p.id, p.name, p.description, p.owner_id, p.created_at, p.updated_at 
-		FROM projects p 
+func (r *postgresRepository) List(ctx context.Context, userID string, page, limit int) ([]Project, int, error) {
+	countQuery := `
+		SELECT COUNT(DISTINCT p.id)
+		FROM projects p
 		LEFT JOIN tasks t ON t.project_id = p.id
 		WHERE p.owner_id = $1 OR t.assignee_id = $1
 	`
-	rows, err := r.db.Query(ctx, query, userID)
+	var total int
+	if err := r.db.QueryRow(ctx, countQuery, userID).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+
+	offset := (page - 1) * limit
+	query := `
+		SELECT DISTINCT p.id, p.name, p.description, p.owner_id, p.created_at, p.updated_at
+		FROM projects p
+		LEFT JOIN tasks t ON t.project_id = p.id
+		WHERE p.owner_id = $1 OR t.assignee_id = $1
+		ORDER BY p.created_at DESC
+		LIMIT $2 OFFSET $3
+	`
+	rows, err := r.db.Query(ctx, query, userID, limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
@@ -52,11 +66,11 @@ func (r *postgresRepository) List(ctx context.Context, userID string) ([]Project
 	for rows.Next() {
 		var p Project
 		if err := rows.Scan(&p.ID, &p.Name, &p.Description, &p.OwnerID, &p.CreatedAt, &p.UpdatedAt); err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		projects = append(projects, p)
 	}
-	return projects, rows.Err()
+	return projects, total, rows.Err()
 }
 
 func (r *postgresRepository) GetByID(ctx context.Context, id string) (*Project, []Task, error) {
