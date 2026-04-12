@@ -25,7 +25,7 @@ func (h *Handler) RegisterRoutes(r *gin.RouterGroup) {
 
 func (h *Handler) list(c *gin.Context) {
 	userID, _ := c.Get("user_id")
-	projects, err := h.service.List(userID.(string))
+	projects, err := h.service.List(c.Request.Context(), userID.(string))
 	if err != nil {
 		utils.SendError(c, http.StatusInternalServerError, "failed to fetch projects")
 		return
@@ -42,7 +42,7 @@ func (h *Handler) create(c *gin.Context) {
 		return
 	}
 
-	project, err := h.service.Create(userID.(string), req)
+	project, err := h.service.Create(c.Request.Context(), userID.(string), req)
 	if err != nil {
 		utils.SendError(c, http.StatusInternalServerError, "failed to create project")
 		return
@@ -53,7 +53,7 @@ func (h *Handler) create(c *gin.Context) {
 
 func (h *Handler) getByID(c *gin.Context) {
 	id := c.Param("id")
-	details, err := h.service.GetDetails(id)
+	details, err := h.service.GetDetails(c.Request.Context(), id)
 	if err != nil {
 		if err == ErrNotFound {
 			utils.SendError(c, http.StatusNotFound, "project not found")
@@ -76,7 +76,7 @@ func (h *Handler) update(c *gin.Context) {
 		return
 	}
 
-	project, err := h.service.Update(id, userID.(string), req)
+	project, err := h.service.Update(c.Request.Context(), id, userID.(string), req)
 	if err != nil {
 		if err.Error() == "forbidden" {
 			utils.SendError(c, http.StatusForbidden, "unauthorized action")
@@ -97,7 +97,7 @@ func (h *Handler) delete(c *gin.Context) {
 	userID, _ := c.Get("user_id")
 	id := c.Param("id")
 
-	err := h.service.Delete(id, userID.(string))
+	err := h.service.Delete(c.Request.Context(), id, userID.(string))
 	if err != nil {
 		if err.Error() == "forbidden" {
 			utils.SendError(c, http.StatusForbidden, "unauthorized action")

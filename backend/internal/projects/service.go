@@ -1,6 +1,7 @@
 package projects
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -8,11 +9,11 @@ import (
 )
 
 type Service interface {
-	Create(userID string, req CreateProjectRequest) (*ProjectResponse, error)
-	List(userID string) ([]ProjectResponse, error)
-	GetDetails(id string) (*ProjectDetailsResponse, error)
-	Update(id, userID string, req UpdateProjectRequest) (*ProjectResponse, error)
-	Delete(id, userID string) error
+	Create(ctx context.Context, userID string, req CreateProjectRequest) (*ProjectResponse, error)
+	List(ctx context.Context, userID string) ([]ProjectResponse, error)
+	GetDetails(ctx context.Context, id string) (*ProjectDetailsResponse, error)
+	Update(ctx context.Context, id, userID string, req UpdateProjectRequest) (*ProjectResponse, error)
+	Delete(ctx context.Context, id, userID string) error
 }
 
 type projectService struct {
@@ -23,7 +24,7 @@ func NewService(repo Repository) Service {
 	return &projectService{repo: repo}
 }
 
-func (s *projectService) Create(userID string, req CreateProjectRequest) (*ProjectResponse, error) {
+func (s *projectService) Create(ctx context.Context, userID string, req CreateProjectRequest) (*ProjectResponse, error) {
 	p := &Project{
 		ID:          uuid.New().String(),
 		Name:        req.Name,
@@ -33,15 +34,15 @@ func (s *projectService) Create(userID string, req CreateProjectRequest) (*Proje
 		UpdatedAt:   time.Now(),
 	}
 
-	if err := s.repo.Create(p); err != nil {
+	if err := s.repo.Create(ctx, p); err != nil {
 		return nil, err
 	}
 
 	return s.mapToResponse(p), nil
 }
 
-func (s *projectService) List(userID string) ([]ProjectResponse, error) {
-	projects, err := s.repo.List(userID)
+func (s *projectService) List(ctx context.Context, userID string) ([]ProjectResponse, error) {
+	projects, err := s.repo.List(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -58,8 +59,8 @@ func (s *projectService) List(userID string) ([]ProjectResponse, error) {
 	return res, nil
 }
 
-func (s *projectService) GetDetails(id string) (*ProjectDetailsResponse, error) {
-	p, tasks, err := s.repo.GetByID(id)
+func (s *projectService) GetDetails(ctx context.Context, id string) (*ProjectDetailsResponse, error) {
+	p, tasks, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -74,8 +75,8 @@ func (s *projectService) GetDetails(id string) (*ProjectDetailsResponse, error) 
 	}, nil
 }
 
-func (s *projectService) Update(id, userID string, req UpdateProjectRequest) (*ProjectResponse, error) {
-	p, _, err := s.repo.GetByID(id)
+func (s *projectService) Update(ctx context.Context, id, userID string, req UpdateProjectRequest) (*ProjectResponse, error) {
+	p, _, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -92,15 +93,15 @@ func (s *projectService) Update(id, userID string, req UpdateProjectRequest) (*P
 	}
 	p.UpdatedAt = time.Now()
 
-	if err := s.repo.Update(p); err != nil {
+	if err := s.repo.Update(ctx, p); err != nil {
 		return nil, err
 	}
 
 	return s.mapToResponse(p), nil
 }
 
-func (s *projectService) Delete(id, userID string) error {
-	p, _, err := s.repo.GetByID(id)
+func (s *projectService) Delete(ctx context.Context, id, userID string) error {
+	p, _, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -109,7 +110,7 @@ func (s *projectService) Delete(id, userID string) error {
 		return errors.New("forbidden")
 	}
 
-	return s.repo.Delete(id)
+	return s.repo.Delete(ctx, id)
 }
 
 func (s *projectService) mapToResponse(p *Project) *ProjectResponse {

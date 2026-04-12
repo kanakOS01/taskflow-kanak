@@ -1,7 +1,11 @@
 package users
 
+import (
+	"context"
+)
+
 type Service interface {
-	GetProfile(id string) (*UserResponse, error)
+	GetProfile(ctx context.Context, id string) (*UserResponse, error)
 }
 
 type userService struct {
@@ -12,8 +16,8 @@ func NewService(repo Repository) Service {
 	return &userService{repo: repo}
 }
 
-func (s *userService) GetProfile(id string) (*UserResponse, error) {
-	user, err := s.repo.GetByID(id)
+func (s *userService) GetProfile(ctx context.Context, id string) (*UserResponse, error) {
+	user, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}

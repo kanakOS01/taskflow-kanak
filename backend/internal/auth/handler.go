@@ -1,7 +1,9 @@
 package auth
 
 import (
+	"context"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"taskflow/internal/utils"
@@ -21,13 +23,16 @@ func (h *Handler) RegisterRoutes(r *gin.RouterGroup) {
 }
 
 func (h *Handler) register(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 3*time.Second)
+	defer cancel()
+
 	var req RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.SendValidationError(c, map[string]string{"body": err.Error()})
 		return
 	}
 
-	if err := h.service.Register(req); err != nil {
+	if err := h.service.Register(ctx, req); err != nil {
 		utils.SendError(c, http.StatusBadRequest, "registration failed, email might be in use")
 		return
 	}
@@ -36,13 +41,16 @@ func (h *Handler) register(c *gin.Context) {
 }
 
 func (h *Handler) login(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 3*time.Second)
+	defer cancel()
+
 	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.SendValidationError(c, map[string]string{"body": err.Error()})
 		return
 	}
 
-	token, err := h.service.Login(req)
+	token, err := h.service.Login(ctx, req)
 	if err != nil {
 		utils.SendError(c, http.StatusUnauthorized, err.Error())
 		return

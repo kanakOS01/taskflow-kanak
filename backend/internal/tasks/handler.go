@@ -30,7 +30,7 @@ func (h *Handler) listByProject(c *gin.Context) {
 	status := c.Query("status")
 	assignee := c.Query("assignee")
 
-	tasks, err := h.service.List(projectID, status, assignee)
+	tasks, err := h.service.List(c.Request.Context(), projectID, status, assignee)
 	if err != nil {
 		utils.SendError(c, http.StatusInternalServerError, "failed to fetch tasks")
 		return
@@ -48,7 +48,7 @@ func (h *Handler) create(c *gin.Context) {
 		return
 	}
 
-	task, err := h.service.Create(projectID, userID.(string), req)
+	task, err := h.service.Create(c.Request.Context(), projectID, userID.(string), req)
 	if err != nil {
 		if err == ErrNotFound {
 			utils.SendError(c, http.StatusNotFound, "project not found")
@@ -71,7 +71,7 @@ func (h *Handler) update(c *gin.Context) {
 		return
 	}
 
-	task, err := h.service.Update(id, userID.(string), req)
+	task, err := h.service.Update(c.Request.Context(), id, userID.(string), req)
 	if err != nil {
 		if err.Error() == "forbidden" {
 			utils.SendError(c, http.StatusForbidden, "unauthorized action")
@@ -92,7 +92,7 @@ func (h *Handler) delete(c *gin.Context) {
 	userID, _ := c.Get("user_id")
 	id := c.Param("id")
 
-	err := h.service.Delete(id, userID.(string))
+	err := h.service.Delete(c.Request.Context(), id, userID.(string))
 	if err != nil {
 		if err.Error() == "forbidden" {
 			utils.SendError(c, http.StatusForbidden, "unauthorized action")

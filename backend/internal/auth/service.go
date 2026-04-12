@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -11,8 +12,8 @@ import (
 )
 
 type Service interface {
-	Register(req RegisterRequest) error
-	Login(req LoginRequest) (string, error)
+	Register(ctx context.Context, req RegisterRequest) error
+	Login(ctx context.Context, req LoginRequest) (string, error)
 }
 
 type authService struct {
@@ -24,7 +25,7 @@ func NewService(userRepo users.Repository, jwtSecret string) Service {
 	return &authService{userRepo: userRepo, jwtSecret: jwtSecret}
 }
 
-func (s *authService) Register(req RegisterRequest) error {
+func (s *authService) Register(ctx context.Context, req RegisterRequest) error {
 	hash, err := utils.HashPassword(req.Password)
 	if err != nil {
 		return err
@@ -39,11 +40,11 @@ func (s *authService) Register(req RegisterRequest) error {
 		UpdatedAt: time.Now(),
 	}
 
-	return s.userRepo.Create(user)
+	return s.userRepo.Create(ctx, user)
 }
 
-func (s *authService) Login(req LoginRequest) (string, error) {
-	user, err := s.userRepo.GetByEmail(req.Email)
+func (s *authService) Login(ctx context.Context, req LoginRequest) (string, error) {
+	user, err := s.userRepo.GetByEmail(ctx, req.Email)
 	if err != nil {
 		return "", errors.New("invalid credentials")
 	}

@@ -1,6 +1,7 @@
 package tasks
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -8,10 +9,10 @@ import (
 )
 
 type Service interface {
-	Create(projectID, userID string, req CreateTaskRequest) (*TaskResponse, error)
-	List(projectID, status, assignee string) ([]TaskResponse, error)
-	Update(id, userID string, req UpdateTaskRequest) (*TaskResponse, error)
-	Delete(id, userID string) error
+	Create(ctx context.Context, projectID, userID string, req CreateTaskRequest) (*TaskResponse, error)
+	List(ctx context.Context, projectID, status, assignee string) ([]TaskResponse, error)
+	Update(ctx context.Context, id, userID string, req UpdateTaskRequest) (*TaskResponse, error)
+	Delete(ctx context.Context, id, userID string) error
 }
 
 type taskService struct {
@@ -22,8 +23,8 @@ func NewService(repo Repository) Service {
 	return &taskService{repo: repo}
 }
 
-func (s *taskService) Create(projectID, userID string, req CreateTaskRequest) (*TaskResponse, error) {
-	_, err := s.repo.GetProjectOwner(projectID)
+func (s *taskService) Create(ctx context.Context, projectID, userID string, req CreateTaskRequest) (*TaskResponse, error) {
+	_, err := s.repo.GetProjectOwner(ctx, projectID)
 	if err != nil {
 		return nil, err
 	}
@@ -51,15 +52,15 @@ func (s *taskService) Create(projectID, userID string, req CreateTaskRequest) (*
 		UpdatedAt:   time.Now(),
 	}
 
-	if err := s.repo.Create(t); err != nil {
+	if err := s.repo.Create(ctx, t); err != nil {
 		return nil, err
 	}
 
 	return s.mapToResponse(t), nil
 }
 
-func (s *taskService) List(projectID, status, assignee string) ([]TaskResponse, error) {
-	tasks, err := s.repo.ListByProject(projectID, status, assignee)
+func (s *taskService) List(ctx context.Context, projectID, status, assignee string) ([]TaskResponse, error) {
+	tasks, err := s.repo.ListByProject(ctx, projectID, status, assignee)
 	if err != nil {
 		return nil, err
 	}
@@ -76,13 +77,13 @@ func (s *taskService) List(projectID, status, assignee string) ([]TaskResponse, 
 	return res, nil
 }
 
-func (s *taskService) Update(id, userID string, req UpdateTaskRequest) (*TaskResponse, error) {
-	t, err := s.repo.GetByID(id)
+func (s *taskService) Update(ctx context.Context, id, userID string, req UpdateTaskRequest) (*TaskResponse, error) {
+	t, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	ownerID, err := s.repo.GetProjectOwner(t.ProjectID)
+	ownerID, err := s.repo.GetProjectOwner(ctx, t.ProjectID)
 	if err != nil {
 		return nil, err
 	}
@@ -113,20 +114,20 @@ func (s *taskService) Update(id, userID string, req UpdateTaskRequest) (*TaskRes
 	}
 	t.UpdatedAt = time.Now()
 
-	if err := s.repo.Update(t); err != nil {
+	if err := s.repo.Update(ctx, t); err != nil {
 		return nil, err
 	}
 
 	return s.mapToResponse(t), nil
 }
 
-func (s *taskService) Delete(id, userID string) error {
-	t, err := s.repo.GetByID(id)
+func (s *taskService) Delete(ctx context.Context, id, userID string) error {
+	t, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return err
 	}
 
-	ownerID, err := s.repo.GetProjectOwner(t.ProjectID)
+	ownerID, err := s.repo.GetProjectOwner(ctx, t.ProjectID)
 	if err != nil {
 		return err
 	}
@@ -136,7 +137,7 @@ func (s *taskService) Delete(id, userID string) error {
 		return errors.New("forbidden")
 	}
 
-	return s.repo.Delete(id)
+	return s.repo.Delete(ctx, id)
 }
 
 func (s *taskService) mapToResponse(t *Task) *TaskResponse {

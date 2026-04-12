@@ -22,7 +22,7 @@ func (h *Handler) RegisterRoutes(r *gin.RouterGroup) {
 func (h *Handler) getMe(c *gin.Context) {
 	userID, _ := c.Get("user_id")
 	
-	user, err := h.service.GetProfile(userID.(string))
+	user, err := h.service.GetProfile(c.Request.Context(), userID.(string))
 	if err != nil {
 		utils.SendError(c, http.StatusNotFound, "user not found")
 		return

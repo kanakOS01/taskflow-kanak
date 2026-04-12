@@ -13,14 +13,12 @@ func RequireAuth(jwtSecret string) gin.HandlerFunc {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
 			utils.SendError(c, http.StatusUnauthorized, "Missing Authorization header")
-			c.Abort()
 			return
 		}
 
 		parts := strings.Split(authHeader, " ")
 		if len(parts) != 2 || parts[0] != "Bearer" {
 			utils.SendError(c, http.StatusUnauthorized, "Invalid Authorization header format")
-			c.Abort()
 			return
 		}
 
@@ -28,7 +26,6 @@ func RequireAuth(jwtSecret string) gin.HandlerFunc {
 		claims, err := utils.ValidateToken(tokenString, jwtSecret)
 		if err != nil {
 			utils.SendError(c, http.StatusUnauthorized, "Invalid or expired token")
-			c.Abort()
 			return
 		}
 

@@ -11,9 +11,9 @@ import (
 var ErrNotFound = errors.New("user not found")
 
 type Repository interface {
-	Create(user *User) error
-	GetByEmail(email string) (*User, error)
-	GetByID(id string) (*User, error)
+	Create(ctx context.Context, user *User) error
+	GetByEmail(ctx context.Context, email string) (*User, error)
+	GetByID(ctx context.Context, id string) (*User, error)
 }
 
 type postgresRepository struct {
@@ -24,19 +24,19 @@ func NewRepository(db *pgxpool.Pool) Repository {
 	return &postgresRepository{db: db}
 }
 
-func (r *postgresRepository) Create(user *User) error {
+func (r *postgresRepository) Create(ctx context.Context, user *User) error {
 	query := `
 		INSERT INTO users (id, name, email, password, created_at, updated_at) 
 		VALUES ($1, $2, $3, $4, $5, $6)
 	`
-	_, err := r.db.Exec(context.Background(), query, user.ID, user.Name, user.Email, user.Password, user.CreatedAt, user.UpdatedAt)
+	_, err := r.db.Exec(ctx, query, user.ID, user.Name, user.Email, user.Password, user.CreatedAt, user.UpdatedAt)
 	return err
 }
 
-func (r *postgresRepository) GetByEmail(email string) (*User, error) {
+func (r *postgresRepository) GetByEmail(ctx context.Context, email string) (*User, error) {
 	var user User
 	query := `SELECT id, name, email, password, created_at, updated_at FROM users WHERE email = $1`
-	err := r.db.QueryRow(context.Background(), query, email).Scan(
+	err := r.db.QueryRow(ctx, query, email).Scan(
 		&user.ID, &user.Name, &user.Email, &user.Password, &user.CreatedAt, &user.UpdatedAt,
 	)
 	if err != nil {
@@ -48,10 +48,10 @@ func (r *postgresRepository) GetByEmail(email string) (*User, error) {
 	return &user, nil
 }
 
-func (r *postgresRepository) GetByID(id string) (*User, error) {
+func (r *postgresRepository) GetByID(ctx context.Context, id string) (*User, error) {
 	var user User
 	query := `SELECT id, name, email, password, created_at, updated_at FROM users WHERE id = $1`
-	err := r.db.QueryRow(context.Background(), query, id).Scan(
+	err := r.db.QueryRow(ctx, query, id).Scan(
 		&user.ID, &user.Name, &user.Email, &user.Password, &user.CreatedAt, &user.UpdatedAt,
 	)
 	if err != nil {
