@@ -32,12 +32,20 @@ func (h *Handler) register(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.Register(ctx, req); err != nil {
+	token, user, err := h.service.Register(ctx, req)
+	if err != nil {
 		utils.SendError(c, http.StatusBadRequest, "registration failed, email might be in use")
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"status": "success"})
+	c.JSON(http.StatusCreated, AuthResponse{
+		Token: token,
+		User: UserResponse{
+			ID:    user.ID,
+			Name:  user.Name,
+			Email: user.Email,
+		},
+	})
 }
 
 func (h *Handler) login(c *gin.Context) {
@@ -50,11 +58,18 @@ func (h *Handler) login(c *gin.Context) {
 		return
 	}
 
-	token, err := h.service.Login(ctx, req)
+	token, user, err := h.service.Login(ctx, req)
 	if err != nil {
 		utils.SendError(c, http.StatusUnauthorized, err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, TokenResponse{Token: token})
+	c.JSON(http.StatusOK, AuthResponse{
+		Token: token,
+		User: UserResponse{
+			ID:    user.ID,
+			Name:  user.Name,
+			Email: user.Email,
+		},
+	})
 }
