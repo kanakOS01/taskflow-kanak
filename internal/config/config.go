@@ -12,15 +12,16 @@ type Config struct {
 
 func LoadConfig() *Config {
 	return &Config{
-		Port:        getEnv("PORT", "3000"),
-		DatabaseURL: getEnv("DATABASE_URL", "postgres://test@localhost:5432/taskflow?sslmode=disable"),
-		JWTSecret:   getEnv("JWT_SECRET", "supersecret"),
+		Port:        getEnv("PORT", "8000"),
+		DatabaseURL: getEnv("DATABASE_URL", "postgres://test@localhost:5432/taskflow"),
+		JWTSecret:   getEnv("JWT_SECRET", "secret"),
 	}
 }
 
 func getEnv(key, fallback string) string {
-	if value, exists := os.LookupEnv(key); exists {
-		return value
+	value, exists := os.LookupEnv(key)
+	if !exists {
+		return fallback
 	}
-	return fallback
+	return value
 }

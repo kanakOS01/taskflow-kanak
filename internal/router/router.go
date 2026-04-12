@@ -21,18 +21,17 @@ func NewRouter(db *pgxpool.Pool, cfg *config.Config) *gin.Engine {
 
 	// Dependencies
 	userRepo := users.NewRepository(db)
-	authService := auth.NewService(userRepo, cfg.JWTSecret)
-	authHandler := auth.NewHandler(authService)
-
-	userService := users.NewService(userRepo)
-	usersHandler := users.NewHandler(userService)
-
 	projectRepo := projects.NewRepository(db)
-	projectService := projects.NewService(projectRepo)
-	projectHandler := projects.NewHandler(projectService)
-
 	taskRepo := tasks.NewRepository(db)
+
+	authService := auth.NewService(userRepo, cfg.JWTSecret)
+	userService := users.NewService(userRepo)
+	projectService := projects.NewService(projectRepo)
 	taskService := tasks.NewService(taskRepo)
+
+	authHandler := auth.NewHandler(authService)
+	usersHandler := users.NewHandler(userService)
+	projectHandler := projects.NewHandler(projectService)
 	tasksHandler := tasks.NewHandler(taskService)
 
 	// Routes
