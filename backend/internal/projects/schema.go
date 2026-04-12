@@ -35,3 +35,19 @@ type ProjectDetailsResponse struct {
 	ProjectResponse
 	Tasks []Task `json:"tasks"`
 }
+
+type StatusCount struct {
+	Status string `json:"status"`
+	Count  int    `json:"count"`
+}
+
+type AssigneeCount struct {
+	AssigneeID   *string `json:"assignee_id"`
+	AssigneeName string  `json:"assignee_name"`
+	Count        int     `json:"count"`
+}
+
+type ProjectStatsResponse struct {
+	StatusCounts   []StatusCount   `json:"status_counts"`
+	AssigneeCounts []AssigneeCount `json:"assignee_counts"`
+}

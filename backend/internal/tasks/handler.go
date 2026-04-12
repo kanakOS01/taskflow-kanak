@@ -19,11 +19,9 @@ func NewHandler(service Service) *Handler {
 }
 
 func (h *Handler) RegisterRoutes(api *gin.RouterGroup) {
-	// Nested under projects
 	api.GET("/projects/:id/tasks", h.listByProject)
 	api.POST("/projects/:id/tasks", h.create)
-	
-	// Direct task routes
+
 	api.PATCH("/tasks/:id", h.update)
 	api.DELETE("/tasks/:id", h.delete)
 }

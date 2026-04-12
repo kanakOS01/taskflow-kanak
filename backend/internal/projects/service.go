@@ -12,6 +12,7 @@ type Service interface {
 	Create(ctx context.Context, userID string, req CreateProjectRequest) (*ProjectResponse, error)
 	List(ctx context.Context, userID string, page, limit int) (*ListProjectsResponse, error)
 	GetDetails(ctx context.Context, id string) (*ProjectDetailsResponse, error)
+	GetStats(ctx context.Context, id string) (*ProjectStatsResponse, error)
 	Update(ctx context.Context, id, userID string, req UpdateProjectRequest) (*ProjectResponse, error)
 	Delete(ctx context.Context, id, userID string) error
 }
@@ -75,6 +76,25 @@ func (s *projectService) GetDetails(ctx context.Context, id string) (*ProjectDet
 	return &ProjectDetailsResponse{
 		ProjectResponse: *s.mapToResponse(p),
 		Tasks:           tasks,
+	}, nil
+}
+
+func (s *projectService) GetStats(ctx context.Context, id string) (*ProjectStatsResponse, error) {
+	statusCounts, assigneeCounts, err := s.repo.GetStats(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	if statusCounts == nil {
+		statusCounts = make([]StatusCount, 0)
+	}
+	if assigneeCounts == nil {
+		assigneeCounts = make([]AssigneeCount, 0)
+	}
+
+	return &ProjectStatsResponse{
+		StatusCounts:   statusCounts,
+		AssigneeCounts: assigneeCounts,
 	}, nil
 }
 

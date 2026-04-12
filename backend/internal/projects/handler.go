@@ -22,6 +22,7 @@ func (h *Handler) RegisterRoutes(r *gin.RouterGroup) {
 	r.GET("", h.list)
 	r.POST("", h.create)
 	r.GET("/:id", h.getByID)
+	r.GET("/:id/stats", h.stats)
 	r.PATCH("/:id", h.update)
 	r.DELETE("/:id", h.delete)
 }
@@ -93,6 +94,24 @@ func (h *Handler) getByID(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, details)
+}
+
+func (h *Handler) stats(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 3*time.Second)
+	defer cancel()
+
+	id := c.Param("id")
+	stats, err := h.service.GetStats(ctx, id)
+	if err != nil {
+		if err == ErrNotFound {
+			utils.SendError(c, http.StatusNotFound, "not found")
+			return
+		}
+		utils.SendError(c, http.StatusInternalServerError, "failed to fetch project stats")
+		return
+	}
+
+	c.JSON(http.StatusOK, stats)
 }
 
 func (h *Handler) update(c *gin.Context) {

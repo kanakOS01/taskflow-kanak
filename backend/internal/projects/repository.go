@@ -14,6 +14,7 @@ type Repository interface {
 	Create(ctx context.Context, project *Project) error
 	List(ctx context.Context, userID string, page, limit int) ([]Project, int, error)
 	GetByID(ctx context.Context, id string) (*Project, []Task, error)
+	GetStats(ctx context.Context, id string) ([]StatusCount, []AssigneeCount, error)
 	Update(ctx context.Context, project *Project) error
 	Delete(ctx context.Context, id string) error
 }
@@ -100,6 +101,56 @@ func (r *postgresRepository) GetByID(ctx context.Context, id string) (*Project, 
 		tasks = append(tasks, t)
 	}
 	return &p, tasks, nil
+}
+
+func (r *postgresRepository) GetStats(ctx context.Context, id string) ([]StatusCount, []AssigneeCount, error) {
+	statusQuery := `
+		SELECT status, count(*) 
+		FROM tasks 
+		WHERE project_id = $1 
+		GROUP BY status
+	`
+	sRows, err := r.db.Query(ctx, statusQuery, id)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer sRows.Close()
+
+	var statusCounts []StatusCount
+	for sRows.Next() {
+		var sc StatusCount
+		if err := sRows.Scan(&sc.Status, &sc.Count); err != nil {
+			return nil, nil, err
+		}
+		statusCounts = append(statusCounts, sc)
+	}
+
+	assigneeQuery := `
+		SELECT 
+			t.assignee_id, 
+			COALESCE(u.name, 'Unassigned') as assignee_name, 
+			count(*) 
+		FROM tasks t 
+		LEFT JOIN users u ON t.assignee_id = u.id 
+		WHERE t.project_id = $1 
+		GROUP BY t.assignee_id, u.name
+	`
+	aRows, err := r.db.Query(ctx, assigneeQuery, id)
+	if err != nil {
+		return statusCounts, nil, err
+	}
+	defer aRows.Close()
+
+	var assigneeCounts []AssigneeCount
+	for aRows.Next() {
+		var ac AssigneeCount
+		if err := aRows.Scan(&ac.AssigneeID, &ac.AssigneeName, &ac.Count); err != nil {
+			return statusCounts, nil, err
+		}
+		assigneeCounts = append(assigneeCounts, ac)
+	}
+
+	return statusCounts, assigneeCounts, nil
 }
 
 func (r *postgresRepository) Update(ctx context.Context, p *Project) error {
