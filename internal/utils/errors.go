@@ -8,11 +8,11 @@ type APIError struct {
 }
 
 func SendError(c *gin.Context, status int, msg string) {
-	c.JSON(status, APIError{Error: msg})
+	c.AbortWithStatusJSON(status, APIError{Error: msg})
 }
 
 func SendValidationError(c *gin.Context, fields map[string]string) {
-	c.JSON(400, APIError{
+	c.AbortWithStatusJSON(400, APIError{
 		Error:  "validation failed",
 		Fields: fields,
 	})

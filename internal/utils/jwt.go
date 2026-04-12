@@ -9,11 +9,11 @@ import (
 
 type JWTClaims struct {
 	UserID string `json:"user_id"`
-	Email  string    `json:"email"`
+	Email  string `json:"email"`
 	jwt.RegisteredClaims
 }
 
-func GenerateToken(userID string, email, secret string) (string, error) {
+func GenerateToken(userID string, email string, secret string) (string, error) {
 	claims := JWTClaims{
 		UserID: userID,
 		Email:  email,
@@ -28,8 +28,8 @@ func GenerateToken(userID string, email, secret string) (string, error) {
 }
 
 func ValidateToken(tokenString, secret string) (*JWTClaims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+	token, err := jwt.ParseWithClaims(tokenString, &JWTClaims{}, func(token *jwt.Token) (any, error) {
+		if token.Method != jwt.SigningMethodHS256 {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 		return []byte(secret), nil
