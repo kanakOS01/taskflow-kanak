@@ -11,8 +11,8 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o taskflow cmd/api/main.go
 # Runtime Stage
 FROM alpine:3.18
 
-# Installing migrate
-RUN apk add --no-cache curl \
+# Installing migrate and postgresql-client
+RUN apk add --no-cache curl postgresql-client \
     && curl -L https://github.com/golang-migrate/migrate/releases/download/v4.16.2/migrate.linux-amd64.tar.gz | tar xvz \
     && mv migrate /usr/local/bin/
 
@@ -24,6 +24,6 @@ COPY scripts/entrypoint.sh /app/entrypoint.sh
 
 RUN chmod +x /app/entrypoint.sh
 
-EXPOSE 3000
+EXPOSE 8000
 
 ENTRYPOINT ["/app/entrypoint.sh"]
