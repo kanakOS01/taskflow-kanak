@@ -85,7 +85,7 @@ func (h *Handler) getByID(c *gin.Context) {
 	details, err := h.service.GetDetails(ctx, id)
 	if err != nil {
 		if err == ErrNotFound {
-			utils.SendError(c, http.StatusNotFound, "project not found")
+			utils.SendError(c, http.StatusNotFound, "not found")
 			return
 		}
 		utils.SendError(c, http.StatusInternalServerError, "failed to fetch project")
@@ -111,11 +111,11 @@ func (h *Handler) update(c *gin.Context) {
 	project, err := h.service.Update(ctx, id, userID.(string), req)
 	if err != nil {
 		if err.Error() == "forbidden" {
-			utils.SendError(c, http.StatusForbidden, "unauthorized action")
+			utils.SendError(c, http.StatusForbidden, "forbidden")
 			return
 		}
 		if err == ErrNotFound {
-			utils.SendError(c, http.StatusNotFound, "project not found")
+			utils.SendError(c, http.StatusNotFound, "not found")
 			return
 		}
 		utils.SendError(c, http.StatusInternalServerError, "failed to update project")
@@ -135,16 +135,16 @@ func (h *Handler) delete(c *gin.Context) {
 	err := h.service.Delete(ctx, id, userID.(string))
 	if err != nil {
 		if err.Error() == "forbidden" {
-			utils.SendError(c, http.StatusForbidden, "unauthorized action")
+			utils.SendError(c, http.StatusForbidden, "forbidden")
 			return
 		}
 		if err == ErrNotFound {
-			utils.SendError(c, http.StatusNotFound, "project not found")
+			utils.SendError(c, http.StatusNotFound, "not found")
 			return
 		}
 		utils.SendError(c, http.StatusInternalServerError, "failed to delete project")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"status": "deleted"})
+	c.Status(http.StatusNoContent)
 }
