@@ -14,7 +14,7 @@ var ErrNotFound = errors.New("task not found")
 type Repository interface {
 	Create(ctx context.Context, task *Task) error
 	GetByID(ctx context.Context, id string) (*Task, error)
-	ListByProject(ctx context.Context, projectID string, status string, assignee string) ([]Task, error)
+	ListByProject(ctx context.Context, projectID string, status string, assignee string, page, limit int) ([]Task, int, error)
 	Update(ctx context.Context, task *Task) error
 	Delete(ctx context.Context, id string) error
 	GetProjectOwner(ctx context.Context, projectID string) (string, error)
@@ -53,26 +53,41 @@ func (r *postgresRepository) GetByID(ctx context.Context, id string) (*Task, err
 	return &t, nil
 }
 
-func (r *postgresRepository) ListByProject(ctx context.Context, projectID string, status string, assignee string) ([]Task, error) {
-	query := `SELECT id, title, description, status, priority, project_id, assignee_id, due_date, created_at, updated_at FROM tasks WHERE project_id = $1`
-	
+func (r *postgresRepository) ListByProject(ctx context.Context, projectID string, status string, assignee string, page, limit int) ([]Task, int, error) {
+	where := `WHERE project_id = $1`
 	args := []interface{}{projectID}
 	argIdx := 2
 
 	if status != "" {
-		query += fmt.Sprintf(" AND status = $%d", argIdx)
+		where += fmt.Sprintf(" AND status = $%d", argIdx)
 		args = append(args, status)
 		argIdx++
 	}
 
 	if assignee != "" {
-		query += fmt.Sprintf(" AND assignee_id = $%d", argIdx)
+		where += fmt.Sprintf(" AND assignee_id = $%d", argIdx)
 		args = append(args, assignee)
+		argIdx++
 	}
 
-	rows, err := r.db.Query(ctx, query, args...)
+	// Count total matching rows
+	var total int
+	countQuery := `SELECT COUNT(*) FROM tasks ` + where
+	if err := r.db.QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+
+	// Paginated data query
+	offset := (page - 1) * limit
+	dataQuery := fmt.Sprintf(
+		`SELECT id, title, description, status, priority, project_id, assignee_id, due_date, created_at, updated_at FROM tasks %s ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,
+		where, argIdx, argIdx+1,
+	)
+	args = append(args, limit, offset)
+
+	rows, err := r.db.Query(ctx, dataQuery, args...)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
@@ -80,11 +95,11 @@ func (r *postgresRepository) ListByProject(ctx context.Context, projectID string
 	for rows.Next() {
 		var t Task
 		if err := rows.Scan(&t.ID, &t.Title, &t.Description, &t.Status, &t.Priority, &t.ProjectID, &t.AssigneeID, &t.DueDate, &t.CreatedAt, &t.UpdatedAt); err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		tasks = append(tasks, t)
 	}
-	return tasks, rows.Err()
+	return tasks, total, rows.Err()
 }
 
 func (r *postgresRepository) Update(ctx context.Context, t *Task) error {

@@ -32,3 +32,18 @@ type TaskResponse struct {
 	CreatedAt   time.Time  `json:"created_at"`
 	UpdatedAt   time.Time  `json:"updated_at"`
 }
+
+type PaginationMeta struct {
+	Page  int `json:"page"`
+	Limit int `json:"limit"`
+	Total int `json:"total"`
+}
+
+type ListTasksResponse struct {
+	Tasks      []TaskResponse `json:"tasks"`
+	Pagination PaginationMeta `json:"pagination"`
+}
+
+type TaskEnvelope struct {
+	Task *TaskResponse `json:"task"`
+}

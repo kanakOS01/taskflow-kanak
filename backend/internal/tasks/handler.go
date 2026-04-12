@@ -3,6 +3,7 @@ package tasks
 import (
 	"context"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -35,12 +36,26 @@ func (h *Handler) listByProject(c *gin.Context) {
 	status := c.Query("status")
 	assignee := c.Query("assignee")
 
-	tasks, err := h.service.List(ctx, projectID, status, assignee)
+	page := 1
+	limit := 20
+
+	if p := c.Query("page"); p != "" {
+		if v, err := strconv.Atoi(p); err == nil && v > 0 {
+			page = v
+		}
+	}
+	if l := c.Query("limit"); l != "" {
+		if v, err := strconv.Atoi(l); err == nil && v > 0 && v <= 100 {
+			limit = v
+		}
+	}
+
+	resp, err := h.service.List(ctx, projectID, status, assignee, page, limit)
 	if err != nil {
 		utils.SendError(c, http.StatusInternalServerError, "failed to fetch tasks")
 		return
 	}
-	c.JSON(http.StatusOK, tasks)
+	c.JSON(http.StatusOK, resp)
 }
 
 func (h *Handler) create(c *gin.Context) {
@@ -66,7 +81,7 @@ func (h *Handler) create(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, task)
+	c.JSON(http.StatusCreated, TaskEnvelope{Task: task})
 }
 
 func (h *Handler) update(c *gin.Context) {
@@ -96,7 +111,7 @@ func (h *Handler) update(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, task)
+	c.JSON(http.StatusOK, TaskEnvelope{Task: task})
 }
 
 func (h *Handler) delete(c *gin.Context) {
@@ -120,5 +135,5 @@ func (h *Handler) delete(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"status": "deleted"})
+	c.Status(http.StatusNoContent)
 }

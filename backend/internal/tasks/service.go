@@ -10,7 +10,7 @@ import (
 
 type Service interface {
 	Create(ctx context.Context, projectID, userID string, req CreateTaskRequest) (*TaskResponse, error)
-	List(ctx context.Context, projectID, status, assignee string) ([]TaskResponse, error)
+	List(ctx context.Context, projectID, status, assignee string, page, limit int) (*ListTasksResponse, error)
 	Update(ctx context.Context, id, userID string, req UpdateTaskRequest) (*TaskResponse, error)
 	Delete(ctx context.Context, id, userID string) error
 }
@@ -59,8 +59,8 @@ func (s *taskService) Create(ctx context.Context, projectID, userID string, req 
 	return s.mapToResponse(t), nil
 }
 
-func (s *taskService) List(ctx context.Context, projectID, status, assignee string) ([]TaskResponse, error) {
-	tasks, err := s.repo.ListByProject(ctx, projectID, status, assignee)
+func (s *taskService) List(ctx context.Context, projectID, status, assignee string, page, limit int) (*ListTasksResponse, error) {
+	tasks, total, err := s.repo.ListByProject(ctx, projectID, status, assignee, page, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -69,12 +69,19 @@ func (s *taskService) List(ctx context.Context, projectID, status, assignee stri
 	for _, t := range tasks {
 		res = append(res, *s.mapToResponse(&t))
 	}
-	
+
 	if res == nil {
 		res = make([]TaskResponse, 0)
 	}
 
-	return res, nil
+	return &ListTasksResponse{
+		Tasks: res,
+		Pagination: PaginationMeta{
+			Page:  page,
+			Limit: limit,
+			Total: total,
+		},
+	}, nil
 }
 
 func (s *taskService) Update(ctx context.Context, id, userID string, req UpdateTaskRequest) (*TaskResponse, error) {
