@@ -81,7 +81,7 @@ func (h *Handler) create(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, TaskEnvelope{Task: task})
+	c.JSON(http.StatusCreated, task)
 }
 
 func (h *Handler) update(c *gin.Context) {
@@ -111,7 +111,7 @@ func (h *Handler) update(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, TaskEnvelope{Task: task})
+	c.JSON(http.StatusOK, task)
 }
 
 func (h *Handler) delete(c *gin.Context) {

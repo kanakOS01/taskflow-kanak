@@ -5,8 +5,8 @@ import "time"
 type CreateTaskRequest struct {
 	Title       string     `json:"title" binding:"required"`
 	Description string     `json:"description"`
-	Status      string     `json:"status"`
-	Priority    string     `json:"priority"`
+	Status      Status     `json:"status"`
+	Priority    Priority   `json:"priority"`
 	AssigneeID  *string    `json:"assignee_id"`
 	DueDate     *time.Time `json:"due_date"`
 }
@@ -14,8 +14,8 @@ type CreateTaskRequest struct {
 type UpdateTaskRequest struct {
 	Title       *string    `json:"title"`
 	Description *string    `json:"description"`
-	Status      *string    `json:"status"`
-	Priority    *string    `json:"priority"`
+	Status      *Status    `json:"status"`
+	Priority    *Priority  `json:"priority"`
 	AssigneeID  *string    `json:"assignee_id"`
 	DueDate     *time.Time `json:"due_date"`
 }
@@ -24,8 +24,8 @@ type TaskResponse struct {
 	ID          string     `json:"id"`
 	Title       string     `json:"title"`
 	Description string     `json:"description"`
-	Status      string     `json:"status"`
-	Priority    string     `json:"priority"`
+	Status      Status     `json:"status"`
+	Priority    Priority   `json:"priority"`
 	ProjectID   string     `json:"project_id"`
 	AssigneeID  *string    `json:"assignee_id"`
 	DueDate     *time.Time `json:"due_date"`
@@ -44,6 +44,3 @@ type ListTasksResponse struct {
 	Pagination PaginationMeta `json:"pagination"`
 }
 
-type TaskEnvelope struct {
-	Task *TaskResponse `json:"task"`
-}

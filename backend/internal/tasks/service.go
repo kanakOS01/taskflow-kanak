@@ -29,12 +29,12 @@ func (s *taskService) Create(ctx context.Context, projectID, userID string, req 
 		return nil, err
 	}
 
-	status := "todo"
+	status := StatusTodo
 	if req.Status != "" {
 		status = req.Status
 	}
 
-	priority := "medium"
+	priority := PriorityMedium
 	if req.Priority != "" {
 		priority = req.Priority
 	}
