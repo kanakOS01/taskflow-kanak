@@ -50,7 +50,7 @@ func (h *Handler) listByProject(c *gin.Context) {
 
 	resp, err := h.service.List(ctx, projectID, status, assignee, page, limit)
 	if err != nil {
-		utils.SendError(c, http.StatusInternalServerError, "failed to fetch tasks")
+		utils.SendError(c, http.StatusInternalServerError, "failed to fetch tasks", err)
 		return
 	}
 	c.JSON(http.StatusOK, resp)
@@ -65,17 +65,17 @@ func (h *Handler) create(c *gin.Context) {
 
 	var req CreateTaskRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.SendValidationError(c, map[string]string{"body": err.Error()})
+		utils.SendValidationError(c, map[string]string{"body": err.Error()}, err)
 		return
 	}
 
 	task, err := h.service.Create(ctx, projectID, userID.(string), req)
 	if err != nil {
 		if err == ErrNotFound {
-			utils.SendError(c, http.StatusNotFound, "project not found")
+			utils.SendError(c, http.StatusNotFound, "project not found", err)
 			return
 		}
-		utils.SendError(c, http.StatusInternalServerError, "failed to create task")
+		utils.SendError(c, http.StatusInternalServerError, "failed to create task", err)
 		return
 	}
 
@@ -91,21 +91,21 @@ func (h *Handler) update(c *gin.Context) {
 
 	var req UpdateTaskRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.SendValidationError(c, map[string]string{"body": err.Error()})
+		utils.SendValidationError(c, map[string]string{"body": err.Error()}, err)
 		return
 	}
 
 	task, err := h.service.Update(ctx, id, userID.(string), req)
 	if err != nil {
 		if err.Error() == "forbidden" {
-			utils.SendError(c, http.StatusForbidden, "unauthorized action")
+			utils.SendError(c, http.StatusForbidden, "unauthorized action", err)
 			return
 		}
 		if err == ErrNotFound {
-			utils.SendError(c, http.StatusNotFound, "task not found")
+			utils.SendError(c, http.StatusNotFound, "task not found", err)
 			return
 		}
-		utils.SendError(c, http.StatusInternalServerError, "failed to update task")
+		utils.SendError(c, http.StatusInternalServerError, "failed to update task", err)
 		return
 	}
 
@@ -122,14 +122,14 @@ func (h *Handler) delete(c *gin.Context) {
 	err := h.service.Delete(ctx, id, userID.(string))
 	if err != nil {
 		if err.Error() == "forbidden" {
-			utils.SendError(c, http.StatusForbidden, "unauthorized action")
+			utils.SendError(c, http.StatusForbidden, "unauthorized action", err)
 			return
 		}
 		if err == ErrNotFound {
-			utils.SendError(c, http.StatusNotFound, "task not found")
+			utils.SendError(c, http.StatusNotFound, "task not found", err)
 			return
 		}
-		utils.SendError(c, http.StatusInternalServerError, "failed to delete task")
+		utils.SendError(c, http.StatusInternalServerError, "failed to delete task", err)
 		return
 	}
 

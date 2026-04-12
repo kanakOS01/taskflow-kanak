@@ -13,7 +13,11 @@ import (
 )
 
 func NewRouter(db *pgxpool.Pool, cfg *config.Config) *gin.Engine {
-	r := gin.Default()
+	r := gin.New()
+
+	r.Use(middleware.Logger())
+	r.Use(gin.Logger())
+	r.Use(gin.Recovery())
 
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})

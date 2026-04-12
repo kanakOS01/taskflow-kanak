@@ -28,13 +28,13 @@ func (h *Handler) register(c *gin.Context) {
 
 	var req RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.SendValidationError(c, map[string]string{"body": err.Error()})
+		utils.SendValidationError(c, map[string]string{"body": err.Error()}, err)
 		return
 	}
 
 	token, user, err := h.service.Register(ctx, req)
 	if err != nil {
-		utils.SendError(c, http.StatusBadRequest, "registration failed, email might be in use")
+		utils.SendError(c, http.StatusBadRequest, "registration failed, email might be in use", err)
 		return
 	}
 
@@ -54,13 +54,13 @@ func (h *Handler) login(c *gin.Context) {
 
 	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.SendValidationError(c, map[string]string{"body": err.Error()})
+		utils.SendValidationError(c, map[string]string{"body": err.Error()}, err)
 		return
 	}
 
 	token, user, err := h.service.Login(ctx, req)
 	if err != nil {
-		utils.SendError(c, http.StatusUnauthorized, err.Error())
+		utils.SendError(c, http.StatusUnauthorized, err.Error(), err)
 		return
 	}
 

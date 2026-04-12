@@ -51,7 +51,7 @@ func (h *Handler) list(c *gin.Context) {
 	userID, _ := c.Get("user_id")
 	resp, err := h.service.List(ctx, userID.(string), page, limit)
 	if err != nil {
-		utils.SendError(c, http.StatusInternalServerError, "failed to fetch projects")
+		utils.SendError(c, http.StatusInternalServerError, "failed to fetch projects", err)
 		return
 	}
 	c.JSON(http.StatusOK, resp)
@@ -65,13 +65,13 @@ func (h *Handler) create(c *gin.Context) {
 
 	var req CreateProjectRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.SendValidationError(c, map[string]string{"body": err.Error()})
+		utils.SendValidationError(c, map[string]string{"body": err.Error()}, err)
 		return
 	}
 
 	project, err := h.service.Create(ctx, userID.(string), req)
 	if err != nil {
-		utils.SendError(c, http.StatusInternalServerError, "failed to create project")
+		utils.SendError(c, http.StatusInternalServerError, "failed to create project", err)
 		return
 	}
 
@@ -86,10 +86,10 @@ func (h *Handler) getByID(c *gin.Context) {
 	details, err := h.service.GetDetails(ctx, id)
 	if err != nil {
 		if err == ErrNotFound {
-			utils.SendError(c, http.StatusNotFound, "not found")
+			utils.SendError(c, http.StatusNotFound, "not found", err)
 			return
 		}
-		utils.SendError(c, http.StatusInternalServerError, "failed to fetch project")
+		utils.SendError(c, http.StatusInternalServerError, "failed to fetch project", err)
 		return
 	}
 
@@ -104,10 +104,10 @@ func (h *Handler) stats(c *gin.Context) {
 	stats, err := h.service.GetStats(ctx, id)
 	if err != nil {
 		if err == ErrNotFound {
-			utils.SendError(c, http.StatusNotFound, "not found")
+			utils.SendError(c, http.StatusNotFound, "not found", err)
 			return
 		}
-		utils.SendError(c, http.StatusInternalServerError, "failed to fetch project stats")
+		utils.SendError(c, http.StatusInternalServerError, "failed to fetch project stats", err)
 		return
 	}
 
@@ -123,21 +123,21 @@ func (h *Handler) update(c *gin.Context) {
 
 	var req UpdateProjectRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.SendValidationError(c, map[string]string{"body": err.Error()})
+		utils.SendValidationError(c, map[string]string{"body": err.Error()}, err)
 		return
 	}
 
 	project, err := h.service.Update(ctx, id, userID.(string), req)
 	if err != nil {
 		if err.Error() == "forbidden" {
-			utils.SendError(c, http.StatusForbidden, "forbidden")
+			utils.SendError(c, http.StatusForbidden, "forbidden", err)
 			return
 		}
 		if err == ErrNotFound {
-			utils.SendError(c, http.StatusNotFound, "not found")
+			utils.SendError(c, http.StatusNotFound, "not found", err)
 			return
 		}
-		utils.SendError(c, http.StatusInternalServerError, "failed to update project")
+		utils.SendError(c, http.StatusInternalServerError, "failed to update project", err)
 		return
 	}
 
@@ -154,14 +154,14 @@ func (h *Handler) delete(c *gin.Context) {
 	err := h.service.Delete(ctx, id, userID.(string))
 	if err != nil {
 		if err.Error() == "forbidden" {
-			utils.SendError(c, http.StatusForbidden, "forbidden")
+			utils.SendError(c, http.StatusForbidden, "forbidden", err)
 			return
 		}
 		if err == ErrNotFound {
-			utils.SendError(c, http.StatusNotFound, "not found")
+			utils.SendError(c, http.StatusNotFound, "not found", err)
 			return
 		}
-		utils.SendError(c, http.StatusInternalServerError, "failed to delete project")
+		utils.SendError(c, http.StatusInternalServerError, "failed to delete project", err)
 		return
 	}
 

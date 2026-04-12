@@ -29,7 +29,7 @@ func (h *Handler) getMe(c *gin.Context) {
 	
 	user, err := h.service.GetProfile(ctx, userID.(string))
 	if err != nil {
-		utils.SendError(c, http.StatusNotFound, "user not found")
+		utils.SendError(c, http.StatusNotFound, "user not found", err)
 		return
 	}
 
