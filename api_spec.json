@@ -1,0 +1,465 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "taskflow",
+    "version": "1.0.0",
+    "description": ""
+  },
+  "servers": [
+    {
+      "url": "localhost:8000"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "health",
+        "responses": {},
+        "tags": [
+          "Health"
+        ]
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "auth/login",
+        "responses": {},
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "utc-millisec"
+                  }
+                }
+              },
+              "example": {
+                "email": "kanak@email.com",
+                "password": "123456789"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "summary": "auth/register",
+        "responses": {},
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              },
+              "example": {
+                "name": "Jane Doe",
+                "email": "jane@example.com",
+                "password": "secret123"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projects/{id}": {
+      "delete": {
+        "summary": "projects/:id",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "example": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiN2UwNThhMzktOTMxZS00MjVmLWIzYTgtMGExZDA2YTBmM2QyIiwiZW1haWwiOiJqYW5lQGV4YW1wbGUuY29tIiwiZXhwIjoxNzc2MDk3MzcwLCJpYXQiOjE3NzYwMTA5NzB9.4pcUsMss3B_qzQEUkTlWxNq1eS2R8y5iDJmb41GH1us"
+          }
+        ],
+        "responses": {},
+        "tags": [
+          "Projects"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "deprecated": false,
+          "schema": {},
+          "example": "8b1897c5-559d-43dd-bbf7-268a983b6f01"
+        }
+      ],
+      "get": {
+        "summary": "projects/:id",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "example": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiN2UwNThhMzktOTMxZS00MjVmLWIzYTgtMGExZDA2YTBmM2QyIiwiZW1haWwiOiJqYW5lQGV4YW1wbGUuY29tIiwiZXhwIjoxNzc2MDk3MzcwLCJpYXQiOjE3NzYwMTA5NzB9.4pcUsMss3B_qzQEUkTlWxNq1eS2R8y5iDJmb41GH1us"
+          }
+        ],
+        "responses": {},
+        "tags": [
+          "Projects"
+        ]
+      },
+      "patch": {
+        "summary": "projects/:id",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "deprecated": false,
+            "schema": {},
+            "example": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiN2UwNThhMzktOTMxZS00MjVmLWIzYTgtMGExZDA2YTBmM2QyIiwiZW1haWwiOiJqYW5lQGV4YW1wbGUuY29tIiwiZXhwIjoxNzc2MDk3MzcwLCJpYXQiOjE3NzYwMTA5NzB9.4pcUsMss3B_qzQEUkTlWxNq1eS2R8y5iDJmb41GH1us"
+          }
+        ],
+        "responses": {},
+        "tags": [
+          "Projects"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "description": {
+                    "type": "string"
+                  }
+                }
+              },
+              "example": {
+                "description": "New description"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projects/{id}/stats": {
+      "get": {
+        "summary": "projects/:id/stats",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "example": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMGRmYmEzZGItZmZiOS00OWRmLTg4N2MtMmViYmE4YzI0MDg4IiwiZW1haWwiOiJrYW5ha0BlbWFpbC5jb20iLCJleHAiOjE3NzYxMzk0OTksImlhdCI6MTc3NjA1MzA5OX0.pKBWGWoXYuwkQcd-RgA4zfvB7a9MYhGqJWl3LuEsERY"
+          }
+        ],
+        "responses": {},
+        "tags": [
+          "Projects"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "example": "8b1897c5-559d-43dd-bbf7-268a983b6f01"
+        }
+      ]
+    },
+    "/projects": {
+      "get": {
+        "summary": "projects",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "example": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMGRmYmEzZGItZmZiOS00OWRmLTg4N2MtMmViYmE4YzI0MDg4IiwiZW1haWwiOiJrYW5ha0BlbWFpbC5jb20iLCJleHAiOjE3NzYxODE5NDUsImlhdCI6MTc3NjA5NTU0NX0.pmbf0hkmwQnee6XGa1Q3TGGc6T6hN45gCEXkiMmgyyk"
+          }
+        ],
+        "responses": {},
+        "tags": [
+          "Projects"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "projects",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "example": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiN2UwNThhMzktOTMxZS00MjVmLWIzYTgtMGExZDA2YTBmM2QyIiwiZW1haWwiOiJqYW5lQGV4YW1wbGUuY29tIiwiZXhwIjoxNzc2MDk3MzcwLCJpYXQiOjE3NzYwMTA5NzB9.4pcUsMss3B_qzQEUkTlWxNq1eS2R8y5iDJmb41GH1us"
+          }
+        ],
+        "responses": {},
+        "tags": [
+          "Projects"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                }
+              },
+              "example": {
+                "name": "New Project",
+                "description": "Optional description"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tasks/{id}": {
+      "delete": {
+        "summary": "tasks/:id",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "example": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiN2UwNThhMzktOTMxZS00MjVmLWIzYTgtMGExZDA2YTBmM2QyIiwiZW1haWwiOiJqYW5lQGV4YW1wbGUuY29tIiwiZXhwIjoxNzc2MDk3MzcwLCJpYXQiOjE3NzYwMTA5NzB9.4pcUsMss3B_qzQEUkTlWxNq1eS2R8y5iDJmb41GH1us"
+          }
+        ],
+        "responses": {},
+        "tags": [
+          "Tasks"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "example": "9b1897c5-559d-43dd-bbf7-268a983b6f02"
+        }
+      ],
+      "patch": {
+        "summary": "tasks/:id",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "example": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiN2UwNThhMzktOTMxZS00MjVmLWIzYTgtMGExZDA2YTBmM2QyIiwiZW1haWwiOiJqYW5lQGV4YW1wbGUuY29tIiwiZXhwIjoxNzc2MDk3MzcwLCJpYXQiOjE3NzYwMTA5NzB9.4pcUsMss3B_qzQEUkTlWxNq1eS2R8y5iDJmb41GH1us"
+          }
+        ],
+        "responses": {},
+        "tags": [
+          "Tasks"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "due_date": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              },
+              "example": {
+                "due_date": "2027-04-13T04:15:21.859095Z"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projects/{id}/tasks": {
+      "get": {
+        "summary": "projects/:id/tasks",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "example": "done"
+          },
+          {
+            "name": "assignee",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "example": "0dfba3db-ffb9-49df-887c-2ebba8c24088"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "example": "1"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "example": "10"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "example": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMGRmYmEzZGItZmZiOS00OWRmLTg4N2MtMmViYmE4YzI0MDg4IiwiZW1haWwiOiJrYW5ha0BlbWFpbC5jb20iLCJleHAiOjE3NzYxMzk0OTksImlhdCI6MTc3NjA1MzA5OX0.pKBWGWoXYuwkQcd-RgA4zfvB7a9MYhGqJWl3LuEsERY"
+          }
+        ],
+        "responses": {},
+        "tags": [
+          "Tasks"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "example": "8b1897c5-559d-43dd-bbf7-268a983b6f01"
+        }
+      ],
+      "post": {
+        "summary": "projects/:id/tasks",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "example": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMGRmYmEzZGItZmZiOS00OWRmLTg4N2MtMmViYmE4YzI0MDg4IiwiZW1haWwiOiJrYW5ha0BlbWFpbC5jb20iLCJleHAiOjE3NzYxMzk0OTksImlhdCI6MTc3NjA1MzA5OX0.pKBWGWoXYuwkQcd-RgA4zfvB7a9MYhGqJWl3LuEsERY"
+          }
+        ],
+        "responses": {},
+        "tags": [
+          "Tasks"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": "{\n    \"title\": \"new task v3\"\n    // \"status\": \"todo\",\n    // \"priority\": \"medium\",\n    // \"assignee_id\": \"7e058a39-931e-425f-b3a8-0a1d06a0f3d2\",\n    // \"due_date\": \"2025-04-20T23:59:59Z\"\n}"
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}
