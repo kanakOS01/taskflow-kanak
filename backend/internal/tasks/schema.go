@@ -20,6 +20,7 @@ type UpdateTaskRequest struct {
 	DueDate     *time.Time `json:"due_date"`
 }
 
+
 type TaskResponse struct {
 	ID          string     `json:"id"`
 	Title       string     `json:"title"`
@@ -28,6 +29,7 @@ type TaskResponse struct {
 	Priority    Priority   `json:"priority"`
 	ProjectID   string     `json:"project_id"`
 	AssigneeID  *string    `json:"assignee_id"`
+	CreatedBy   string     `json:"created_by"`
 	DueDate     *time.Time `json:"due_date"`
 	CreatedAt   time.Time  `json:"created_at"`
 	UpdatedAt   time.Time  `json:"updated_at"`
@@ -43,4 +45,3 @@ type ListTasksResponse struct {
 	Tasks      []TaskResponse `json:"tasks"`
 	Pagination PaginationMeta `json:"pagination"`
 }
-

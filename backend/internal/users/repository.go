@@ -14,6 +14,7 @@ type Repository interface {
 	Create(ctx context.Context, user *User) error
 	GetByEmail(ctx context.Context, email string) (*User, error)
 	GetByID(ctx context.Context, id string) (*User, error)
+	Exists(ctx context.Context, id string) (bool, error)
 }
 
 type postgresRepository struct {
@@ -61,4 +62,10 @@ func (r *postgresRepository) GetByID(ctx context.Context, id string) (*User, err
 		return nil, err
 	}
 	return &user, nil
+}
+
+func (r *postgresRepository) Exists(ctx context.Context, id string) (bool, error) {
+	var exists bool
+	err := r.db.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM users WHERE id = $1)`, id).Scan(&exists)
+	return exists, err
 }

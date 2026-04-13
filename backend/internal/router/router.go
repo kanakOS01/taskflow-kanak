@@ -31,7 +31,7 @@ func NewRouter(db *pgxpool.Pool, cfg *config.Config) *gin.Engine {
 	authService := auth.NewService(userRepo, cfg.JWTSecret)
 	userService := users.NewService(userRepo)
 	projectService := projects.NewService(projectRepo)
-	taskService := tasks.NewService(taskRepo)
+	taskService := tasks.NewService(taskRepo, projectRepo, userRepo)
 
 	authHandler := auth.NewHandler(authService)
 	usersHandler := users.NewHandler(userService)

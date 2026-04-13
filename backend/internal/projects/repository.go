@@ -17,6 +17,7 @@ type Repository interface {
 	GetStats(ctx context.Context, id string) ([]StatusCount, []AssigneeCount, error)
 	Update(ctx context.Context, project *Project) error
 	Delete(ctx context.Context, id string) error
+	Exists(ctx context.Context, id string) (bool, error)
 }
 
 type postgresRepository struct {
@@ -163,4 +164,10 @@ func (r *postgresRepository) Delete(ctx context.Context, id string) error {
 	query := `DELETE FROM projects WHERE id = $1`
 	_, err := r.db.Exec(ctx, query, id)
 	return err
+}
+
+func (r *postgresRepository) Exists(ctx context.Context, id string) (bool, error) {
+	var exists bool
+	err := r.db.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM projects WHERE id = $1)`, id).Scan(&exists)
+	return exists, err
 }

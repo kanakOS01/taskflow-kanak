@@ -50,6 +50,10 @@ func (h *Handler) listByProject(c *gin.Context) {
 
 	resp, err := h.service.List(ctx, projectID, status, assignee, page, limit)
 	if err != nil {
+		if err == ErrProjectNotFound {
+			utils.SendError(c, http.StatusNotFound, "project not found", err)
+			return
+		}
 		utils.SendError(c, http.StatusInternalServerError, "failed to fetch tasks", err)
 		return
 	}
@@ -71,11 +75,18 @@ func (h *Handler) create(c *gin.Context) {
 
 	task, err := h.service.Create(ctx, projectID, userID.(string), req)
 	if err != nil {
-		if err == ErrNotFound {
+		switch err {
+		case ErrProjectNotFound:
 			utils.SendError(c, http.StatusNotFound, "project not found", err)
-			return
+		case ErrForbidden:
+			utils.SendError(c, http.StatusForbidden, "only the project owner can create tasks", err)
+		case ErrPastDueDate:
+			utils.SendError(c, http.StatusUnprocessableEntity, err.Error(), err)
+		case ErrInvalidAssignee:
+			utils.SendError(c, http.StatusUnprocessableEntity, "assignee_id does not refer to a valid user", err)
+		default:
+			utils.SendError(c, http.StatusInternalServerError, "failed to create task", err)
 		}
-		utils.SendError(c, http.StatusInternalServerError, "failed to create task", err)
 		return
 	}
 
@@ -90,22 +101,27 @@ func (h *Handler) update(c *gin.Context) {
 	id := c.Param("id")
 
 	var req UpdateTaskRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := utils.BindStrict(c, &req); err != nil {
 		utils.SendValidationError(c, map[string]string{"body": err.Error()}, err)
 		return
 	}
 
 	task, err := h.service.Update(ctx, id, userID.(string), req)
 	if err != nil {
-		if err.Error() == "forbidden" {
+		switch err {
+		case ErrForbidden:
 			utils.SendError(c, http.StatusForbidden, "unauthorized action", err)
-			return
-		}
-		if err == ErrNotFound {
+		case ErrNotFound:
 			utils.SendError(c, http.StatusNotFound, "task not found", err)
-			return
+		case ErrProjectNotFound:
+			utils.SendError(c, http.StatusNotFound, "project not found", err)
+		case ErrPastDueDate:
+			utils.SendError(c, http.StatusUnprocessableEntity, err.Error(), err)
+		case ErrInvalidAssignee:
+			utils.SendError(c, http.StatusUnprocessableEntity, "assignee_id does not refer to a valid user", err)
+		default:
+			utils.SendError(c, http.StatusInternalServerError, "failed to update task", err)
 		}
-		utils.SendError(c, http.StatusInternalServerError, "failed to update task", err)
 		return
 	}
 
@@ -121,15 +137,16 @@ func (h *Handler) delete(c *gin.Context) {
 
 	err := h.service.Delete(ctx, id, userID.(string))
 	if err != nil {
-		if err.Error() == "forbidden" {
+		switch err {
+		case ErrForbidden:
 			utils.SendError(c, http.StatusForbidden, "unauthorized action", err)
-			return
-		}
-		if err == ErrNotFound {
+		case ErrNotFound:
 			utils.SendError(c, http.StatusNotFound, "task not found", err)
-			return
+		case ErrProjectNotFound:
+			utils.SendError(c, http.StatusNotFound, "project not found", err)
+		default:
+			utils.SendError(c, http.StatusInternalServerError, "failed to delete task", err)
 		}
-		utils.SendError(c, http.StatusInternalServerError, "failed to delete task", err)
 		return
 	}
 

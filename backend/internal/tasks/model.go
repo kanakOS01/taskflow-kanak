@@ -56,6 +56,7 @@ type Task struct {
 	Priority    Priority   `json:"priority"`
 	ProjectID   string     `json:"project_id"`
 	AssigneeID  *string    `json:"assignee_id"`
+	CreatedBy   string     `json:"created_by"`
 	DueDate     *time.Time `json:"due_date"`
 	CreatedAt   time.Time  `json:"created_at"`
 	UpdatedAt   time.Time  `json:"updated_at"`

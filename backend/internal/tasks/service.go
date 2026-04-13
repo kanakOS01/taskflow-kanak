@@ -6,7 +6,13 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"taskflow/internal/projects"
+	"taskflow/internal/users"
 )
+
+var ErrForbidden = errors.New("forbidden")
+var ErrPastDueDate = errors.New("due date cannot be in the past")
+var ErrInvalidAssignee = errors.New("assignee user not found")
 
 type Service interface {
 	Create(ctx context.Context, projectID, userID string, req CreateTaskRequest) (*TaskResponse, error)
@@ -16,17 +22,45 @@ type Service interface {
 }
 
 type taskService struct {
-	repo Repository
+	repo        Repository
+	projectRepo projects.Repository
+	userRepo    users.Repository
 }
 
-func NewService(repo Repository) Service {
-	return &taskService{repo: repo}
+func NewService(repo Repository, projectRepo projects.Repository, userRepo users.Repository) Service {
+	return &taskService{repo: repo, projectRepo: projectRepo, userRepo: userRepo}
 }
 
 func (s *taskService) Create(ctx context.Context, projectID, userID string, req CreateTaskRequest) (*TaskResponse, error) {
-	_, err := s.repo.GetProjectOwner(ctx, projectID)
+	// Verify project exists and get owner
+	ownerID, err := s.repo.GetProjectOwner(ctx, projectID)
 	if err != nil {
-		return nil, err
+		return nil, err // ErrProjectNotFound propagated
+	}
+
+	// Only the project owner can create tasks
+	if ownerID != userID {
+		return nil, ErrForbidden
+	}
+
+	// Validate due date is not in the past (compare by date only, ignore time)
+	if req.DueDate != nil {
+		today := time.Now().UTC().Truncate(24 * time.Hour)
+		due := req.DueDate.UTC().Truncate(24 * time.Hour)
+		if due.Before(today) {
+			return nil, ErrPastDueDate
+		}
+	}
+
+	// Validate assignee exists if provided
+	if req.AssigneeID != nil {
+		exists, err := s.userRepo.Exists(ctx, *req.AssigneeID)
+		if err != nil {
+			return nil, err
+		}
+		if !exists {
+			return nil, ErrInvalidAssignee
+		}
 	}
 
 	status := StatusTodo
@@ -47,6 +81,7 @@ func (s *taskService) Create(ctx context.Context, projectID, userID string, req 
 		Priority:    priority,
 		ProjectID:   projectID,
 		AssigneeID:  req.AssigneeID,
+		CreatedBy:   userID,
 		DueDate:     req.DueDate,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
@@ -60,6 +95,15 @@ func (s *taskService) Create(ctx context.Context, projectID, userID string, req 
 }
 
 func (s *taskService) List(ctx context.Context, projectID, status, assignee string, page, limit int) (*ListTasksResponse, error) {
+	// Verify project exists before listing tasks
+	exists, err := s.projectRepo.Exists(ctx, projectID)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, ErrProjectNotFound
+	}
+
 	tasks, total, err := s.repo.ListByProject(ctx, projectID, status, assignee, page, limit)
 	if err != nil {
 		return nil, err
@@ -95,10 +139,31 @@ func (s *taskService) Update(ctx context.Context, id, userID string, req UpdateT
 		return nil, err
 	}
 
-	// Update allows project owner or assignee
+	// Allow: project owner, task creator, or current assignee
 	isAssignee := t.AssigneeID != nil && *t.AssigneeID == userID
-	if ownerID != userID && !isAssignee {
-		return nil, errors.New("forbidden")
+	isCreator := t.CreatedBy == userID
+	if ownerID != userID && !isAssignee && !isCreator {
+		return nil, ErrForbidden
+	}
+
+	// Validate new due date is not in the past
+	if req.DueDate != nil {
+		today := time.Now().UTC().Truncate(24 * time.Hour)
+		due := req.DueDate.UTC().Truncate(24 * time.Hour)
+		if due.Before(today) {
+			return nil, ErrPastDueDate
+		}
+	}
+
+	// Validate new assignee exists
+	if req.AssigneeID != nil {
+		exists, err := s.userRepo.Exists(ctx, *req.AssigneeID)
+		if err != nil {
+			return nil, err
+		}
+		if !exists {
+			return nil, ErrInvalidAssignee
+		}
 	}
 
 	if req.Title != nil {
@@ -139,9 +204,10 @@ func (s *taskService) Delete(ctx context.Context, id, userID string) error {
 		return err
 	}
 
-	// Only project owner can delete, assigning task deletion purely to owner
-	if ownerID != userID {
-		return errors.New("forbidden")
+	// Allow project owner or task creator to delete
+	isCreator := t.CreatedBy == userID
+	if ownerID != userID && !isCreator {
+		return ErrForbidden
 	}
 
 	return s.repo.Delete(ctx, id)
@@ -156,6 +222,7 @@ func (s *taskService) mapToResponse(t *Task) *TaskResponse {
 		Priority:    t.Priority,
 		ProjectID:   t.ProjectID,
 		AssigneeID:  t.AssigneeID,
+		CreatedBy:   t.CreatedBy,
 		DueDate:     t.DueDate,
 		CreatedAt:   t.CreatedAt,
 		UpdatedAt:   t.UpdatedAt,

@@ -10,6 +10,8 @@ import (
 )
 
 var ErrNotFound = errors.New("task not found")
+var ErrProjectNotFound = errors.New("project not found")
+var ErrAssigneeNotFound = errors.New("assignee not found")
 
 type Repository interface {
 	Create(ctx context.Context, task *Task) error
@@ -30,19 +32,22 @@ func NewRepository(db *pgxpool.Pool) Repository {
 
 func (r *postgresRepository) Create(ctx context.Context, t *Task) error {
 	query := `
-		INSERT INTO tasks (id, title, description, status, priority, project_id, assignee_id, due_date, created_at, updated_at) 
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+		INSERT INTO tasks (id, title, description, status, priority, project_id, assignee_id, created_by, due_date, created_at, updated_at) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 	`
-	_, err := r.db.Exec(ctx, query, t.ID, t.Title, t.Description, t.Status, t.Priority, t.ProjectID, t.AssigneeID, t.DueDate, t.CreatedAt, t.UpdatedAt)
+	_, err := r.db.Exec(ctx, query,
+		t.ID, t.Title, t.Description, t.Status, t.Priority,
+		t.ProjectID, t.AssigneeID, t.CreatedBy, t.DueDate, t.CreatedAt, t.UpdatedAt,
+	)
 	return err
 }
 
 func (r *postgresRepository) GetByID(ctx context.Context, id string) (*Task, error) {
-	query := `SELECT id, title, description, status, priority, project_id, assignee_id, due_date, created_at, updated_at FROM tasks WHERE id = $1`
+	query := `SELECT id, title, description, status, priority, project_id, assignee_id, created_by, due_date, created_at, updated_at FROM tasks WHERE id = $1`
 	var t Task
 	err := r.db.QueryRow(ctx, query, id).Scan(
-		&t.ID, &t.Title, &t.Description, &t.Status, &t.Priority, 
-		&t.ProjectID, &t.AssigneeID, &t.DueDate, &t.CreatedAt, &t.UpdatedAt,
+		&t.ID, &t.Title, &t.Description, &t.Status, &t.Priority,
+		&t.ProjectID, &t.AssigneeID, &t.CreatedBy, &t.DueDate, &t.CreatedAt, &t.UpdatedAt,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -80,7 +85,7 @@ func (r *postgresRepository) ListByProject(ctx context.Context, projectID string
 	// Paginated data query
 	offset := (page - 1) * limit
 	dataQuery := fmt.Sprintf(
-		`SELECT id, title, description, status, priority, project_id, assignee_id, due_date, created_at, updated_at FROM tasks %s ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,
+		`SELECT id, title, description, status, priority, project_id, assignee_id, created_by, due_date, created_at, updated_at FROM tasks %s ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,
 		where, argIdx, argIdx+1,
 	)
 	args = append(args, limit, offset)
@@ -94,7 +99,7 @@ func (r *postgresRepository) ListByProject(ctx context.Context, projectID string
 	var tasks []Task
 	for rows.Next() {
 		var t Task
-		if err := rows.Scan(&t.ID, &t.Title, &t.Description, &t.Status, &t.Priority, &t.ProjectID, &t.AssigneeID, &t.DueDate, &t.CreatedAt, &t.UpdatedAt); err != nil {
+		if err := rows.Scan(&t.ID, &t.Title, &t.Description, &t.Status, &t.Priority, &t.ProjectID, &t.AssigneeID, &t.CreatedBy, &t.DueDate, &t.CreatedAt, &t.UpdatedAt); err != nil {
 			return nil, 0, err
 		}
 		tasks = append(tasks, t)
@@ -120,7 +125,7 @@ func (r *postgresRepository) GetProjectOwner(ctx context.Context, projectID stri
 	err := r.db.QueryRow(ctx, query, projectID).Scan(&ownerID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return "", ErrNotFound
+			return "", ErrProjectNotFound
 		}
 		return "", err
 	}
